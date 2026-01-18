@@ -2,19 +2,19 @@
  - GitHub AI_StackChan_Minimal
  https://github.com/A-Uta/AI_StackChan_Minimal
 
- - AIｽﾀｯｸﾁｬﾝ - ミニマル(Minimal)で利用しているWebサービスと、その料金は下記を参照ください
+ - Web services used by AI Stack-chan Minimal and their pricing are listed below:
  1. OpenAI API
  https://platform.openai.com/docs/overview
-   A. Pricing (利用料金) - GPT-XXX / Audio models-Whisperをご確認ください
+   A. Pricing - Please check GPT-XXX / Audio models-Whisper
    https://openai.com/api/pricing/
 
- 2. WEB版VOICEVOX API（高速）（無料）
+ 2. Web VOICEVOX API (Fast) (Free)
  https://voicevox.su-shiki.com/su-shikiapis/
 
  3. Google Speech-to-Text
- https://cloud.google.com/speech-to-text?hl=ja
-   A. Speech-to-Text の料金 - Speech-to-Text V1 API をご確認ください
-   https://cloud.google.com/speech-to-text/pricing?hl=ja
+ https://cloud.google.com/speech-to-text?hl=en
+   A. Pricing - Please check Speech-to-Text V1 API
+   https://cloud.google.com/speech-to-text/pricing?hl=en
 ***/
 
 #include <Arduino.h>
@@ -73,22 +73,22 @@ String message_error = "";    // Add for Global language
 String message_cant_hear = ""; // Add for Global language
 String message_dont_understand = ""; // Add for Global language
 
-/// 接続：Wifiは[スマホアプリ(EspTouch)]、また[APIキーはブラウザ]から設定します。
+/// Connection: WiFi is configured via [smartphone app (EspTouch)], and [API keys via browser].
 
-/// I2C接続のピン番号 // Add for SSD1306
+/// I2C connection pin numbers // Add for SSD1306
 #define I2C_SDA_PIN 21
 #define I2C_SCL_PIN 25
-/// LEDストリップのピン番号
+/// LED strip pin number
 #define LED_PIN     27
-/// LEDストリップのLED数
+/// Number of LEDs in LED strip
 #define NUM_LEDS    1
-/// LED明るさ
+/// LED brightness
 #define BRIGHTNESS 64 // Adjust for Atom Echo
-/// LEDストリップの色の並び順
+/// LED strip color order
 // #define COLOR_ORDER GRB
-/// 保存する質問と回答の最大数
+/// Maximum number of questions and answers to save
 const int MAX_HISTORY = 2; // Adjust for Atom Echo
-/// 過去の質問と回答を保存するデータ構造
+/// Data structure to store past questions and answers
 std::deque<String> chatHistory;
 ///---------------------------------------------
 String OPENAI_API_KEY = "";
@@ -98,25 +98,25 @@ String TTS_SPEAKER = "&speaker=";
 String TTS_PARMS = TTS_SPEAKER;
 String speech_text_buffer = "";
 
-/// キャラクターの音声構造
+/// Character voice structure
 class CHARACTER_VOICE {
   public:
     // uint8_t normal, happy, sasa_yaki;
     uint16_t normal, happy, sasa_yaki;
 };
 
-/// 選択:キャラクター
+/// Selection: Character
 String CHARACTER = "";
 uint8_t character;
 
-/// 選択:Chat GPTのモデルVersion
+/// Selection: ChatGPT model version
 String MODEL_VER = "";
 uint8_t model_ver;
 
-/// 入力:Webからのテキスト入力
+/// Input: Text input from web
 String TEXTAREA = "";
 
-/// 入力:Webからの入力
+/// Input: Input from web
 String Toio_ActionID = "";
 
 // DynamicJsonDocument chat_doc(1024*10);
@@ -136,9 +136,9 @@ String InitBuffer = "";
 
 static const char HEAD[] PROGMEM = R"KEWL(
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
-  <title>AIｽﾀｯｸﾁｬﾝ</title>
+  <title>AI Stack-chan</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -147,14 +147,14 @@ static const char HEAD[] PROGMEM = R"KEWL(
         height: 200px;
         resize: both;
       }
-    </style>  
+    </style>
 </head>)KEWL";
 
 static const char APIKEY_HTML[] PROGMEM = R"KEWL(
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AIｽﾀｯｸﾁｬﾝ - APIキー設定</title>
+    <title>AI Stack-chan - API Key Settings</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -166,26 +166,26 @@ static const char APIKEY_HTML[] PROGMEM = R"KEWL(
     </style>
   </head>
   <body>
-    <h1>APIキー設定</h1>
+    <h1>API Key Settings</h1>
     <form>
       <input type="text" id="openai" name="openai" oninput="adjustSize(this)">
-      <label for="role1">OpenAI(必須)</label></br>
+      <label for="role1">OpenAI (Required)</label></br>
       <input type="text" id="voicevox" name="voicevox" oninput="adjustSize(this)">
-      <label for="role2">VoiceVox(必須)</label></br>
+      <label for="role2">VoiceVox (Required)</label></br>
       <input type="text" id="sttapikey" name="sttapikey" oninput="adjustSize(this)">
-      <label for="role3">Google Speech to Text(未入力時,OpenAI Whisperを使用)</label></br>
-      <button type="button" onclick="sendData()">送信する</button>
-      <button type="button" onclick="history.back()">戻る</button>
+      <label for="role3">Google Speech to Text (Uses OpenAI Whisper if not entered)</label></br>
+      <button type="button" onclick="sendData()">Submit</button>
+      <button type="button" onclick="history.back()">Back</button>
     </form>
     <script>
       function adjustSize(input) {
         input.style.width = ((input.value.length + 1) * 8) + 'px';
       }
       function sendData() {
-        // FormDataオブジェクトを作成
+        // Create FormData object
         const formData = new FormData();
 
-        // 各ロールの値をFormDataオブジェクトに追加
+        // Add each role value to FormData object
         const openaiValue = document.getElementById("openai").value;
         if (openaiValue !== "") formData.append("openai", openaiValue);
 
@@ -199,14 +199,14 @@ static const char APIKEY_HTML[] PROGMEM = R"KEWL(
           formData.append("sttapikey", openaiValue);
         }
 
-	    // POSTリクエストを送信
+	    // Send POST request
 	    const xhr = new XMLHttpRequest();
 	    xhr.open("POST", "/apikey_set");
 	    xhr.onload = function() {
 	      if (xhr.status === 200) {
-	        alert("設定を送信しました！");
+	        alert("Settings sent successfully!");
 	      } else {
-	        alert("設定の送信に失敗しました。");
+	        alert("Failed to send settings.");
 	      }
 	    };
 	    xhr.send(formData);
@@ -219,7 +219,7 @@ static const char CHARACTER_VOICE_HTML[] PROGMEM = R"KEWL(
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AIｽﾀｯｸﾁｬﾝ - 言語/キャラクター音声の設定</title>
+    <title>AI Stack-chan - Language/Character Voice Settings</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -231,45 +231,45 @@ static const char CHARACTER_VOICE_HTML[] PROGMEM = R"KEWL(
     </style>
   </head>
   <body>
-    <h1>言語/キャラクター音声の設定</h1>
+    <h1>Language/Character Voice Settings</h1>
     <form>
       <select id="character" onchange="sendData()">
-        <optgroup label="日本語">
-          <option value="ja-03">ずんだもん</option>
-          <option value="ja-02">四国めたん</option>
-          <option value="ja-13">青山龍星</option>
+        <optgroup label="Japanese">
+          <option value="ja-03">Zundamon</option>
+          <option value="ja-02">Shikoku Metan</option>
+          <option value="ja-13">Aoyama Ryusei</option>
           <option value="ja-23">WhiteCUL</option>
         </optgroup>
         <optgroup label="English">
           <option value="en-01">Normal</option>
         </optgroup>
-        <optgroup label="中文">
+        <optgroup label="Chinese">
           <option value="zh-01">Normal</option>
         </optgroup>
       </select></br>
-      <button type="button" onclick="history.back()">戻る</button></br></br>
-      <li><a href='https://voicevox.hiroshiba.jp/'>VOICEVOX</a>のキャラクター音声を利用しています</li>
-      <li><label for="role1">クレジット表記 - VOICEVOX:ずんだもん,VOICEVOX:四国めたん,VOICEVOX:青山龍星,VOICEVOX:WhiteCUL</label></li>
+      <button type="button" onclick="history.back()">Back</button></br></br>
+      <li>Using character voices from <a href='https://voicevox.hiroshiba.jp/'>VOICEVOX</a></li>
+      <li><label for="role1">Credits - VOICEVOX:Zundamon, VOICEVOX:Shikoku Metan, VOICEVOX:Aoyama Ryusei, VOICEVOX:WhiteCUL</label></li>
     </form>
     <script>
       function sendData() {
-        // FormDataオブジェクトを作成
+        // Create FormData object
         const formData = new FormData();
 
-        // 各ロールの値をFormDataオブジェクトに追加
+        // Add each role value to FormData object
         const characterValue = document.getElementById("character").value;
         if (characterValue !== "") {
           formData.append("character", characterValue);
         }
 
-	    // POSTリクエストを送信
+	    // Send POST request
 	    const xhr = new XMLHttpRequest();
 	    xhr.open("POST", "/character_voice_set");
 	    xhr.onload = function() {
 	      if (xhr.status === 200) {
-	        alert("設定を送信しました！");
+	        alert("Settings sent successfully!");
 	      } else {
-	        alert("設定の送信に失敗しました。");
+	        alert("Failed to send settings.");
 	      }
 	    };
 	    xhr.send(formData);
@@ -282,7 +282,7 @@ static const char MODEL_HTML[] PROGMEM = R"KEWL(
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AIｽﾀｯｸﾁｬﾝ - 対話型AIモデルの設定</title>
+    <title>AI Stack-chan - Conversational AI Model Settings</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -294,37 +294,37 @@ static const char MODEL_HTML[] PROGMEM = R"KEWL(
     </style>
   </head>
   <body>
-    <h1>対話型AIモデルの設定</h1>
+    <h1>Conversational AI Model Settings</h1>
     <form>
       <select id="model_ver" onchange="sendData()">
         <optgroup label="ChatGPT">
-          <option value="">選択してください</option>
+          <option value="">Please select</option>
           <option value="1">gpt-3.5-turbo</option>
           <option value="2">gpt-4o-mini</option>
           <option value="3">gpt-4o</option>
         </optgroup>
       </select></br>
-      <button type="button" onclick="history.back()">戻る</button>
+      <button type="button" onclick="history.back()">Back</button>
     </form>
     <script>
       function sendData() {
-        // FormDataオブジェクトを作成
+        // Create FormData object
         const formData = new FormData();
 
-        // 各ロールの値をFormDataオブジェクトに追加
+        // Add each role value to FormData object
         const model_verValue = document.getElementById("model_ver").value;
         if (model_verValue !== "") {
           formData.append("model_ver", model_verValue);
         }
 
-	    // POSTリクエストを送信
+	    // Send POST request
 	    const xhr = new XMLHttpRequest();
 	    xhr.open("POST", "/model_ver_set");
 	    xhr.onload = function() {
 	      if (xhr.status === 200) {
-	        alert("設定を送信しました！");
+	        alert("Settings sent successfully!");
 	      } else {
-	        alert("設定の送信に失敗しました。");
+	        alert("Failed to send settings.");
 	      }
 	    };
 	    xhr.send(formData);
@@ -337,7 +337,7 @@ static const char TEXT_CHAT_HTML[] PROGMEM = R"KEWL(
 <!DOCTYPE html>
 <html>
 <head>
-	<title>AIｽﾀｯｸﾁｬﾝ - テキストで会話</title>
+	<title>AI Stack-chan - Text Chat</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
@@ -349,13 +349,13 @@ static const char TEXT_CHAT_HTML[] PROGMEM = R"KEWL(
 	</style>
 </head>
 <body>
-	<h1>テキストで会話</h1>
+	<h1>Text Chat</h1>
 	<form onsubmit="postData(event)">
-		<label for="textarea">以下に会話を入力してください。</label><br>
+		<label for="textarea">Enter your conversation below.</label><br>
 		<textarea id="textarea" name="textarea"></textarea><br><br>
-    <button type="submit">送信する</button>
-    <button type="reset">リセットする</button>
-    <button type="button" onclick="history.back()">戻る</button>
+    <button type="submit">Submit</button>
+    <button type="reset">Reset</button>
+    <button type="button" onclick="history.back()">Back</button>
 	</form>
 	<script>
 		function postData(event) {
@@ -366,9 +366,9 @@ static const char TEXT_CHAT_HTML[] PROGMEM = R"KEWL(
 				xhr.open("POST", "/text_chat_set");
 				xhr.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
 				xhr.send(textAreaContent);
-        alert("会話を送信しました！");
+        alert("Message sent!");
 			} else {
-        alert("何か会話を入力してください");
+        alert("Please enter a message");
 			}
 		}
 	</script>
@@ -379,14 +379,14 @@ static const char TOIO_HTML[] PROGMEM = R"KEWL(
 <!DOCTYPE html>
 <html>
 <head>
-	<title>AIｽﾀｯｸﾁｬﾝ - Toio</title>
+	<title>AI Stack-chan - Toio</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
 	</style>
 </head>
 <body>
-	<h1>Toioを操作</h1>
+	<h1>Control Toio</h1>
 <!-- Sample
 https://mukudori-noise.skr.jp/esp1.html
 https://qiita.com/suzakutakumi3/items/bbd24ff6b8e6ca0310a9
@@ -394,7 +394,7 @@ https://tekuteku-embedded.xyz/2021/08/21/esp32%E3%81%AEweb%E3%82%B5%E3%83%BC%E3%
 https://swift-smooth.com/character-list/
 -->
   <form>
-		<label for="textarea">操作ボタン</label><br>
+		<label for="textarea">Control Buttons</label><br>
     <table>
       <tr>
         <th></th>
@@ -413,27 +413,27 @@ https://swift-smooth.com/character-list/
       </tr>
     </table>
     <br>
-    <button type="button" onclick="history.back()">戻る</button>    
+    <button type="button" onclick="history.back()">Back</button>
   </form>
 	<script>
     function sendData(btn) {
-      // FormDataオブジェクトを作成
+      // Create FormData object
       const formData = new FormData();
 
-      // 各ロールの値をFormDataオブジェクトに追加
+      // Add button value to FormData object
       const set_button_Value = btn;
       if (set_button_Value !== "") {
         formData.append("toio_action", set_button_Value);
       }
 
-      // POSTリクエストを送信
+      // Send POST request
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "/toio_action_set");
       xhr.onload = function() {
         // if (xhr.status === 200) {
-        //   alert("操作を送信しました！");
+        //   alert("Action sent successfully!");
         // } else {
-        //   alert("操作の送信に失敗しました。");
+        //   alert("Failed to send action.");
         // }
       };
       xhr.send(formData);
@@ -444,13 +444,13 @@ https://swift-smooth.com/character-list/
 
 void handleRoot() {
   String message = "";
-  message += "<h1>設定メニュー</h1>";
+  message += "<h1>Settings Menu</h1>";
   message += "\n<ul>";
-  message += "\n  <li><a href='apikey'>APIキー設定</a></li>";
-  message += "\n  <li><a href='character_voice'>言語/キャラクター音声の設定</a></li>";
-  message += "\n  <li><a href='model_ver'>対話型AIモデルの設定</a></li>";
-  message += "\n  <li><a href='text_chat'>テキストで会話</a></li>";
-  message += "\n  <li><a href='toio_action'>Toioを操作</a></li>";
+  message += "\n  <li><a href='apikey'>API Key Settings</a></li>";
+  message += "\n  <li><a href='character_voice'>Language/Character Voice Settings</a></li>";
+  message += "\n  <li><a href='model_ver'>Conversational AI Model Settings</a></li>";
+  message += "\n  <li><a href='text_chat'>Text Chat</a></li>";
+  message += "\n  <li><a href='toio_action'>Control Toio</a></li>";
   message += "\n</ul>";
   server.send(200, "text/html", String(HEAD) + String("<body>") + message + String("</body>"));
 }
@@ -471,12 +471,12 @@ void handleNotFound(){
 }
 
 void handle_apikey() {
-  /// ファイルを読み込み、クライアントに送信する
+  /// Read file and send to client
   server.send(200, "text/html", APIKEY_HTML);
 }
 
 void handle_apikey_set() {
-  /// POST以外は拒否
+  /// Reject if not POST
   if (server.method() != HTTP_POST) {
     return;
   }
@@ -503,7 +503,7 @@ void handle_apikey_set() {
   }
   neopixelWrite(LED_PIN, 0, BRIGHTNESS, 0);  // LED:Green
   avatar.setExpression(Expression::Happy);
-  avatar.setSpeechText("APIキーが、セットされました");
+  avatar.setSpeechText("API key has been set");
   server.send(200, "text/plain", String("OK"));
   delay(3000);
   avatar.setExpression(Expression::Neutral);
@@ -512,11 +512,11 @@ void handle_apikey_set() {
 }
 
 void handle_character_voice() {
-  /// ファイルを読み込み、クライアントに送信する
+  /// Read file and send to client
   server.send(200, "text/html", CHARACTER_VOICE_HTML);
 }
 void handle_character_voice_set() {
-  /// POST以外は拒否
+  /// Reject if not POST
   if (server.method() != HTTP_POST) {
     return;
   }
@@ -544,7 +544,7 @@ void handle_character_voice_set() {
   }
   neopixelWrite(LED_PIN, 0, BRIGHTNESS, 0);  // LED:Green
   avatar.setExpression(Expression::Happy);
-  avatar.setSpeechText("キャラクター音声が、変更されました");
+  avatar.setSpeechText("Character voice has been changed");
   server.send(200, "text/plain", String("OK"));
   delay(3000);
   avatar.setExpression(Expression::Neutral);
@@ -553,11 +553,11 @@ void handle_character_voice_set() {
 }
 
 void handle_model() {
-  /// ファイルを読み込み、クライアントに送信する
+  /// Read file and send to client
   server.send(200, "text/html", MODEL_HTML);
 }
 void handle_model_set() {
-  /// POST以外は拒否
+  /// Reject if not POST
   if (server.method() != HTTP_POST) {
     return;
   }
@@ -581,7 +581,7 @@ void handle_model_set() {
   }
   neopixelWrite(LED_PIN, 0, BRIGHTNESS, 0);  // LED:Green
   avatar.setExpression(Expression::Happy);
-  avatar.setSpeechText("モデルが、変更されました");
+  avatar.setSpeechText("Model has been changed");
   server.send(200, "text/plain", String("OK"));
   delay(3000);
   avatar.setExpression(Expression::Neutral);
@@ -590,11 +590,11 @@ void handle_model_set() {
 }
 
 void handle_toio_action() {
-  /// ファイルを読み込み、クライアントに送信する
+  /// Read file and send to client
   server.send(200, "text/html", TOIO_HTML);
 }
 void handle_toio_action_set() {
-  /// POST以外は拒否
+  /// Reject if not POST
   if (server.method() != HTTP_POST) {
     return;
   }
@@ -603,10 +603,10 @@ void handle_toio_action_set() {
  
   Toio_ActionID = toio_action;
   Serial.println(toio_action);
-  String toio_action_msg = "Toio操作：" + toio_action;
+  String toio_action_msg = "Toio action: " + toio_action;
 
   /// Toio Test
-  while (Serial1.available() > 0) {//受信バッファクリア
+  while (Serial1.available() > 0) {// Clear receive buffer
     char t = Serial1.read();
   }
   Serial.println("Toio-Actin:Start");
@@ -633,7 +633,7 @@ bool init_chat_doc(const char *data)
     return false;
   }
   String json_str; //= JSON.stringify(chat_doc);
-  serializeJsonPretty(chat_doc, json_str);  // 文字列をシリアルポートに出力する
+  serializeJsonPretty(chat_doc, json_str);  // Output string to serial port
 //  Serial.println(json_str);
     return true;
 }
@@ -733,21 +733,21 @@ String exec_chatGPT(String text) {
   static String response = "";
   Serial.print("InitBuffer1: "); Serial.println(InitBuffer);
 
-  /// model 切替え
+  /// Model switching
   if (MODEL_VER == "gpt-4o") {
-    InitBuffer = "{\"model\": \"gpt-4o\",\"messages\": [{\"role\": \"user\", \"content\": \"""\"},\{\"role\": \"system\", \"content\": \"150文字以内で回答する。\"}\]}";
-    // InitBuffer = "{\"model\": \" + MODEL_VER + "\,\"messages\": [{\"role\": \"user\", \"content\": \"""\"},\{\"role\": \"system\", \"content\": \"150文字以内で回答する。\"}\]}";
+    InitBuffer = "{\"model\": \"gpt-4o\",\"messages\": [{\"role\": \"user\", \"content\": \"""\"},\{\"role\": \"system\", \"content\": \"Answer within 150 characters.\"}\]}";
+    // InitBuffer = "{\"model\": \" + MODEL_VER + "\,\"messages\": [{\"role\": \"user\", \"content\": \"""\"},\{\"role\": \"system\", \"content\": \"Answer within 150 characters.\"}\]}";
   } else if (MODEL_VER == "gpt-4o-mini") {
-    InitBuffer = "{\"model\": \"gpt-4o-mini\",\"messages\": [{\"role\": \"user\", \"content\": \"""\"},\{\"role\": \"system\", \"content\": \"150文字以内で回答する。\"}\]}";
+    InitBuffer = "{\"model\": \"gpt-4o-mini\",\"messages\": [{\"role\": \"user\", \"content\": \"""\"},\{\"role\": \"system\", \"content\": \"Answer within 150 characters.\"}\]}";
   } else {
     InitBuffer = "{\"model\": \"gpt-3.5-turbo\",\"messages\": [{\"role\": \"user\", \"content\": \"""\"}]}";
   }
   Serial.print("InitBuffer2: "); Serial.println(InitBuffer);
 
   init_chat_doc(InitBuffer.c_str());
-  /// 質問をチャット履歴に追加
+  /// Add question to chat history
   chatHistory.push_back(text);
-  /// チャット履歴が最大数を超えた場合、古い質問と回答を削除
+  /// Delete old questions and answers if chat history exceeds maximum
   if (chatHistory.size() > MAX_HISTORY * 2)
   {
     chatHistory.pop_front();
@@ -769,7 +769,7 @@ String exec_chatGPT(String text) {
   String json_string;
   serializeJson(chat_doc, json_string);
   response = chatGpt(json_string);
-  /// 返答をチャット履歴に追加
+  /// Add response to chat history
   chatHistory.push_back(response);
   // Serial.printf("chatHistory.max_size %d \n",chatHistory.max_size());
   // Serial.printf("chatHistory.size %d \n",chatHistory.size());
@@ -951,48 +951,48 @@ void lipSync(void *args)  // Add for M5 avatar
 }
 
 void Wifi_setup() { // Add for Web Setting (SmartConfig)
-  // Serial.println("接続中:WiFi"); M5.Display.println("接続中:WiFi");
+  // Serial.println("Connecting:WiFi"); M5.Display.println("Connecting:WiFi");
   Serial.println("Connect:WiFi"); M5.Display.println("Connect:WiFi");
   WiFi.disconnect();
   WiFi.softAPdisconnect(true);
-  WiFi.mode(WIFI_STA); 
+  WiFi.mode(WIFI_STA);
   WiFi.begin();
 
-  /// 前回接続時情報で接続する
+  /// Connect using previous connection info
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print("."); M5.Display.print(".");
     delay(500);
-    /// 10秒以上接続できなかったら抜ける
+    /// Exit if connection fails for more than 10 seconds
     if ( 10000 < millis() ) {
       break;
     }
   }
   Serial.println(""); M5.Display.println("");
-  /// 未接続の場合にはSmartConfig待受
+  /// Wait for SmartConfig if not connected
   if ( WiFi.status() != WL_CONNECTED ) {
     WiFi.mode(WIFI_STA);
     WiFi.beginSmartConfig();
-    // Serial.println("接続中:SmartConfig"); M5.Display.println("接続中:SmartConfig");
+    // Serial.println("Connecting:SmartConfig"); M5.Display.println("Connecting:SmartConfig");
     Serial.println("Connect:SmartConfig"); M5.Display.println("Connect:SmartConfig");
-    
+
     while (!WiFi.smartConfigDone()) {
       delay(500);
       Serial.print("#"); M5.Display.print("#");
-      /// 30秒以上接続できなかったら抜ける
+      /// Exit if connection fails for more than 30 seconds
       if ( 30000 < millis() ) {
         Serial.println("");
         Serial.println("Reset");
         ESP.restart();
       }
     }
-    /// Wi-fi接続
+    /// Wi-Fi connection
     Serial.println(""); M5.Display.println("");
-    // Serial.println("接続中:WiFi"); M5.Display.println("接続中:WiFi");
+    // Serial.println("Connecting:WiFi"); M5.Display.println("Connecting:WiFi");
     Serial.println("Connect:WiFi"); M5.Display.println("Connect:WiFi");
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print("."); M5.Display.print(".");
-      /// 60秒以上接続できなかったら抜ける
+      /// Exit if connection fails for more than 60 seconds
       if ( 60000 < millis() ) {
         Serial.println("");
         Serial.println("Reset");
@@ -1002,7 +1002,7 @@ void Wifi_setup() { // Add for Web Setting (SmartConfig)
   }
 }
 
-/// 会話ロジック
+/// Conversation logic
 void start_talking() {
   M5.Speaker.tone(1000, 100);
   delay(200);
@@ -1013,14 +1013,14 @@ void start_talking() {
   String ret;
 
   CHARACTER_VOICE Chr_Vic;
-  ///  最新話者IDの取得ページ(ただしハミングは非対応2024/6/14現在) <https://www.voicevox.su-shiki.com/voicevox-id>
+  /// Latest speaker ID page (humming not supported as of 2024/6/14) <https://www.voicevox.su-shiki.com/voicevox-id>
   if (CHARACTER == "02") {
-    /// [四国めたん]
-    Chr_Vic.normal    =  2; // ノーマル
-    Chr_Vic.happy     =  0; // あまあま
-    Chr_Vic.sasa_yaki = 36; // ささやき
+    /// [Shikoku Metan]
+    Chr_Vic.normal    =  2; // Normal
+    Chr_Vic.happy     =  0; // Sweet
+    Chr_Vic.sasa_yaki = 36; // Whisper
   } else if (CHARACTER == "13") {
-    /// [青山龍星]
+    /// [Aoyama Ryusei]
     Chr_Vic.normal    = 13;
     Chr_Vic.happy     = 83;
     Chr_Vic.sasa_yaki = 86;
@@ -1028,16 +1028,16 @@ void start_talking() {
     /// [WhiteCUL]
     Chr_Vic.normal    = 23;
     Chr_Vic.happy     = 24;
-    Chr_Vic.sasa_yaki = 25; // かなしい
+    Chr_Vic.sasa_yaki = 25; // Sad
   } else {
-    /// Default : [ずんだもん]
+    /// Default : [Zundamon]
     Chr_Vic.normal    =  3;
     Chr_Vic.happy     =  1;
     Chr_Vic.sasa_yaki = 22;
   }
-  TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.normal) ; // ノーマル
-  
-  /// 音声認識：テキスト入力がある場合は、テキストを優先する
+  TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.normal) ; // Normal
+
+  /// Speech recognition: If text input exists, prioritize text
   if ( TEXTAREA == "" ) {
     if(OPENAI_API_KEY == ""){  // Add for Web Setting
       Serial.println("Error: No API-Key Setting");
@@ -1052,16 +1052,16 @@ void start_talking() {
   } else {
       ret = TEXTAREA;
   }
-  // テキスト入力を初期化
+  // Initialize text input
   TEXTAREA = "";
-  
-  String You_said;
-  // You_said = "認識:" +  ret;
-  You_said = message_You_said +  ret; 
 
-  avatar.setSpeechText(You_said.c_str()); // 認識した文字を表示
+  String You_said;
+  // You_said = "Recognized:" +  ret;
+  You_said = message_You_said +  ret;
+
+  avatar.setSpeechText(You_said.c_str()); // Display recognized text
   delay(2500);
-  // Serial.println("音声認識終了"); Serial.println("音声認識結果");
+  // Serial.println("Speech recognition ended"); Serial.println("Speech recognition result");
   M5.Speaker.begin();
   if(ret != "") {
     neopixelWrite(LED_PIN, 0, BRIGHTNESS, 0);  // LED:Green
@@ -1069,7 +1069,7 @@ void start_talking() {
     if (!mp3->isRunning()) {
       String response = ""; // Add for Web Setting
       if(OPENAI_API_KEY == ""){
-        response = "初めに、URL：" + WiFi.localIP().toString() + "をブラウザに入力し、APIキーを設定してください";
+        response = "First, enter URL: " + WiFi.localIP().toString() + " in your browser and set the API key";
       } else {
         response = exec_chatGPT(ret);
       }
@@ -1080,7 +1080,7 @@ void start_talking() {
         // avatar.setSpeechText("エラーです");        // Add for M5 avatar
         avatar.setSpeechText("Error");        // Add for M5 avatar
         avatar.setExpression(Expression::Sad);
-        TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.sasa_yaki) ; // ささやき
+        TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.sasa_yaki) ; // Whisper
         if (LANG_CODE == "ja-jp") {
           Voicevox_tts((char*)response.c_str(), (char*)TTS_PARMS.c_str());
         } else {
@@ -1100,11 +1100,11 @@ void start_talking() {
       }
     }
   } else {
-    Serial.println("音声認識失敗");
+    Serial.println("Speech recognition failed");
     avatar.setExpression(Expression::Sad);
-    avatar.setSpeechText(message_cant_hear.c_str());  // 聞き取れませんでした
+    avatar.setSpeechText(message_cant_hear.c_str());  // I couldn't hear you
     String response = message_cant_hear.c_str();
-    TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.sasa_yaki) ; // ささやき
+    TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.sasa_yaki) ; // Whisper
     if (LANG_CODE == "ja-jp") {
       Voicevox_tts((char*)response.c_str(), (char*)TTS_PARMS.c_str());
     } else {
@@ -1116,15 +1116,15 @@ void start_talking() {
     avatar.setSpeechText("");
     avatar.setExpression(Expression::Neutral);
   } 
-  TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.normal) ; // ノーマル
+  TTS_PARMS = TTS_SPEAKER + String(Chr_Vic.normal) ; // Normal
 }
 
 void handle_text_chat() {
-  /// ファイルを読み込み、クライアントに送信する
+  /// Read file and send to client
   server.send(200, "text/html", TEXT_CHAT_HTML);
 }
 void handle_text_chat_set() {
-  /// POST以外は拒否
+  /// Reject if not POST
   if (server.method() != HTTP_POST) {
     return;
   }
@@ -1132,7 +1132,7 @@ void handle_text_chat_set() {
   TEXTAREA = server.arg("plain");
   Serial.print("TEXTAREA: "); Serial.println(TEXTAREA);
 
-  /// おしゃべり開始
+  /// Start conversation
   start_talking();
 }
 
@@ -1160,14 +1160,14 @@ void setup()
   /// set master volume (0~255)
   M5.Speaker.setVolume(150);  // Adjust for Atom Echo (DO NOT set over 150. This echo Speaker will be broken.)
 
-  /// シリアル通信機能の設定 via Grove Pin
+  /// Serial communication settings via Grove Pin
   Serial1.begin(19200, SERIAL_8N1, 32, 26); // RX,TX - Grove Pin
 
   neopixelWrite(LED_PIN, 0, BRIGHTNESS, 0);  // Green
 
   mp3 = new AudioGeneratorMP3();
 
-  /// ESP32本体フラッシュメモリより 保存した値を読み取り
+  /// Read saved values from ESP32 flash memory
   {
     uint32_t nvs_handle1;
     if (ESP_OK == nvs_open("setting", NVS_READONLY, &nvs_handle1)) {
@@ -1211,7 +1211,7 @@ void setup()
     }
   }
 
-  /// ネットワークに接続
+  /// Connect to network
   Wifi_setup(); // Add for Web Setting
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 0);
@@ -1238,9 +1238,9 @@ void setup()
   server.onNotFound(handleNotFound);
 
   init_chat_doc(json_ChatString.c_str());
-  /// SPIFFSをマウントする
+  /// Mount SPIFFS
   if(SPIFFS.begin(true)){
-    /// JSONファイルを開く
+    /// Open JSON file
     File file = SPIFFS.open("/data.json", "r");
     if(file){
       DeserializationError error = deserializeJson(chat_doc, file);
@@ -1250,8 +1250,8 @@ void setup()
       }
       serializeJson(chat_doc, InitBuffer);
       Role_JSON = InitBuffer;
-      String json_str; 
-      serializeJsonPretty(chat_doc, json_str);  // 文字列をシリアルポートに出力する
+      String json_str;
+      serializeJsonPretty(chat_doc, json_str);  // Output string to serial port
       Serial.println(json_str);
     } else {
       Serial.println("Failed to open file for reading");
@@ -1259,10 +1259,10 @@ void setup()
     }
   } else {
     Serial.println("An Error has occurred while mounting SPIFFS");
-  }  
+  }
 
   server.begin(); // Add for Web Setting
-  Serial.println("Setting URL:"); M5.Lcd.println("Setting URL:");   // 設定URL
+  Serial.println("Setting URL:"); M5.Lcd.println("Setting URL:");   // Settings URL
   M5.Lcd.setTextSize(1.3);            // Adjust for SSD1306 (Connect info)
   Serial.print(WiFi.localIP()); M5.Lcd.print(WiFi.localIP());
   delay(6000);
@@ -1286,7 +1286,7 @@ void loop()
 {
   M5.update();
 
-  /// 設定表示：URL,モデル
+  /// Display settings: URL, model
   if (M5.BtnA.wasDoubleClicked())
   {
       neopixelWrite(LED_PIN, 0, 0, BRIGHTNESS);  // LED:Blue
@@ -1312,10 +1312,10 @@ void loop()
 
   if (M5.BtnA.wasSingleClicked())
   {
-    /// 言語別メッセージ切替
+    /// Switch messages by language
     setlang_messege();
-    /// おしゃべり開始
-    start_talking();    
+    /// Start conversation
+    start_talking();
   }
 
   if (mp3->isRunning()) {

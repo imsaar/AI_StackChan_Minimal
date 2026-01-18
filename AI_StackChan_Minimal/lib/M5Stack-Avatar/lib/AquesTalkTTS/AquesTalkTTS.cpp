@@ -1,23 +1,22 @@
-// AquesTalkTTS - AquesTalk ESP32のラッパークラス
+// AquesTalkTTS - AquesTalk ESP32 Wrapper Class
 //	AquesTalk-ESP32 + I2S + internal-DAC
-// Copyright (c) 2018 AQUEST (本ソースコードは改変自由)
+// Copyright (c) 2018 AQUEST (This source code is free to modify)
 /*
-        * 本ソースは、M5Staclkのハードウェア用に記述されています。
-          お使いのハードウェア環境に応じて変更してください。
+        * This source is written for M5Stack hardware.
+          Please modify according to your hardware environment.
 
         *
-   DAC_XXX()関数は、D/A部分の関数です。このソースはI2S経由で内蔵DACから音声を出力するものです。
+   DAC_XXX() functions are D/A related functions. This source outputs audio from the internal DAC via I2S.
         *
-   I2S-内蔵DACの場合、符号無しのデータを与える必要があるため、DAC_write()で変換しています。
-          外付けのI2S-DACを使う場合は注意してください。
+   For I2S-internal DAC, unsigned data must be provided, so conversion is done in DAC_write().
+          Be careful when using an external I2S-DAC.
 
-        * aqdic_open()/aqdic_close()/aqdic_read()関数は
-   辞書データ(aqdic_m.bin)にアクセスする関数で、
-          libaquestalk.aから呼び出されます。このソースはM5StackのSDにファイルとして辞書データが配置
-          されている場合のコードです。
+        * aqdic_open()/aqdic_close()/aqdic_read() functions are
+   functions to access dictionary data (aqdic_m.bin), called from libaquestalk.a.
+          This source is for when the dictionary data is placed as a file on the M5Stack SD.
 
         *
-   ワークバッファをヒープ上に確保しています。create()は400B、createK()は20.4KBを使います。
+   Work buffer is allocated on the heap. create() uses 400B, createK() uses 20.4KB.
 */
 
 #include "AquesTalkTTS.h"
@@ -52,7 +51,7 @@ static int DAC_write_val(uint16_t val);
 
 AquesTalkTTS TTS;  // the only instance of AquesTalkTTS class
 
-// 音声記号からの音声合成のみの場合の初期化
+// Initialization for speech synthesis from phonetic symbols only
 int AquesTalkTTS::create(const char *licencekey) {
   int iret;
 
@@ -69,7 +68,7 @@ int AquesTalkTTS::create(const char *licencekey) {
   return 0;
 }
 
-// 漢字仮名混じり文からの音声合成の場合の初期化
+// Initialization for speech synthesis from kanji-kana mixed text
 int AquesTalkTTS::createK(const char *licencekey) {
   int iret;
 
@@ -219,7 +218,7 @@ static i2s_config_t i2s_config = {
 static void DAC_create() {
   i2s_driver_install((i2s_port_t)i2s_num, &i2s_config, 0, NULL);
   i2s_set_pin((i2s_port_t)i2s_num, NULL);
-  i2s_stop((i2s_port_t)i2s_num);  // Create時はstop状態
+  i2s_stop((i2s_port_t)i2s_num);  // Stop state when created
 }
 
 static void DAC_release() {
@@ -285,47 +284,47 @@ static int DAC_write_val(uint16_t val) {
 
 /*****************************************************************************
 
-        辞書データ(aqdic_m.bin)のアクセス関数
+        Dictionary Data (aqdic_m.bin) Access Functions
 
-        ここで定義する関数は、AquesTalk ESP32ライブラリから呼び出されます。
-        辞書データを読み込む機能を、使用するハードウェア構成に応じて実装します。
+        The functions defined here are called from the AquesTalk ESP32 library.
+        Implement the dictionary data reading function according to your hardware configuration.
 
-        漢字仮名混じり文からの音声合成を行う場合に記述が必須で、
-        さもなければリンク時にエラーとなります。
-        音声記号列からの音声合成だけを使用する場合はこれら関数の記述は不要です。
+        These are required when performing speech synthesis from kanji-kana mixed text,
+        otherwise a link error will occur.
+        These functions are not needed if only using speech synthesis from phonetic symbols.
 
-        辞書データの配置場所は以下などが考えられます。
-        ・SDカード上のファイル
-        ・SPIシリアルフラッシュメモリ
-        ・メモリマップドされたシリアルフラッシュ
-        ・マイコン内蔵フラッシュメモリ
+        Dictionary data can be placed in the following locations:
+        - File on SD card
+        - SPI serial flash memory
+        - Memory-mapped serial flash
+        - Microcontroller built-in flash memory
 
-        辞書データは大量かつランダムにアクセスされるので、
-        この関数の処理量が音声合成のパフォーマンスに与える影響は大きいです。
+        Dictionary data is accessed frequently and randomly,
+        so the processing of these functions has a significant impact on speech synthesis performance.
 
 ******************************************************************************/
 
 /*---------------------------------------------------------------------
-        以下のコードはM5StackのSDカードに辞書データファイルを書き込んで使用する場合。
-        メインプログラムでM5.begin()を呼び出してSD.begin()しておくことを忘れずに
+        The following code is for when dictionary data file is written to M5Stack SD card.
+        Don't forget to call M5.begin() and SD.begin() in the main program
 ------------------------------------------------------------------------*/
 #include <SD.h>  // ArduinoIDE
 
-// SDのaq_dicフォルダの下に辞書データファイル(aqdic_m.bin)を配置
+// Place dictionary data file (aqdic_m.bin) under aq_dic folder on SD
 #define FILE_DIC "/aq_dic/aqdic_m.bin"
 
-// 仮想的な辞書データの先頭アドレス
-// （NULL以外なら任意で良い。但し4byteアライメント）
+// Virtual dictionary data start address
+// (Any value other than NULL is fine. But must be 4-byte aligned)
 #define ADDR_ORG (0x10001000)
 
 static File fp;
 
 //-----------------------------------------------------------------
-// 辞書データアクセスの初期化
-// CAqK2R_Create()内から一度だけ呼び出される
-// 戻り値
-//    仮想的な辞書データの先頭アドレスを返す（0以外。4byteアライメント)。
-//    エラーのときは0を返す
+// Initialize dictionary data access
+// Called only once from within CAqK2R_Create()
+// Return value
+//    Returns the virtual dictionary data start address (non-zero, 4-byte aligned).
+//    Returns 0 on error
 extern "C" size_t aqdic_open() {
   fp = SD.open(FILE_DIC);
   if (!fp) return 0;  // err
@@ -333,19 +332,19 @@ extern "C" size_t aqdic_open() {
 }
 
 //-----------------------------------------------------------------
-// 辞書データアクセスの終了
-// CAqK2R_Release()内から一度だけ呼び出される
+// End dictionary data access
+// Called only once from within CAqK2R_Release()
 extern "C" void aqdic_close() {
   if (fp) fp.close();
 }
 
 //-----------------------------------------------------------------
-// 辞書データの読み込み
-// pos: 先頭アドレス[byte]
-// size: 読み込むサイズ[byte]
-// buf:  読み込むデータ配列 uint8_t(size)
-// 戻り値：	読みこんだバイト数
-// CAqK2R_Convert()/CAqK2R_ConvertW()から複数回呼び出される
+// Read dictionary data
+// pos: Start address [byte]
+// size: Size to read [byte]
+// buf:  Data array to read uint8_t(size)
+// Return value: Number of bytes read
+// Called multiple times from CAqK2R_Convert()/CAqK2R_ConvertW()
 extern "C" size_t aqdic_read(size_t pos, size_t size, void *buf) {
   fp.seek(pos - ADDR_ORG);
   return fp.read((uint8_t *)buf, size);

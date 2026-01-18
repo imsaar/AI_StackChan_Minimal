@@ -85,7 +85,7 @@ String CloudSpeechClient::Transcribe(Audio* audio, String LANG_CODE) {  // Add f
     Serial.println("====================");
 //  root.prettyPrintTo(Serial);
     const char* text = jsonBuffer["results"][0]["alternatives"][0]["transcript"];
-    Serial.print("\n認識結果：");
+    Serial.print("\nRecognition result: ");
     if(text) {
       result = String (text);
       Serial.println((char *)text);
